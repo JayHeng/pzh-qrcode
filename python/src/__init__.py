@@ -15,7 +15,7 @@ import subprocess, re, os
 class BarCodeReader():
   location = ""
   command = "java"
-  libs = ["javase.jar", "core.jar","jcommander-1.48.jar"]
+  libs = [r"C:\tools_mcu\Python36\Lib\site-packages\zxing\javase.jar", r"C:\tools_mcu\Python36\Lib\site-packages\zxing\core.jar", r"C:\tools_mcu\Python36\Lib\site-packages\zxing\jcommander-1.48.jar"]
   args = ["-cp", "LIBS", "com.google.zxing.client.j2se.CommandLineRunner"]
 
   def __init__(self, loc=""):
