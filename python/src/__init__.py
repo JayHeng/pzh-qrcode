@@ -15,7 +15,7 @@ import subprocess, re, os
 class BarCodeReader():
   location = ""
   command = "java"
-  libs = ["javase/javase.jar", "core/core.jar"]
+  libs = ["javase.jar", "core.jar","jcommander-1.48.jar"]
   args = ["-cp", "LIBS", "com.google.zxing.client.j2se.CommandLineRunner"]
 
   def __init__(self, loc=""):
@@ -35,7 +35,7 @@ class BarCodeReader():
     if qr_only:
       cmd.append("--possibleFormats=QR_CODE")
 
-    libraries = [self.location + "/" + l for l in self.libs]
+    libraries = [ l for l in self.libs]# self.location + "/" +
 
     cmd = [ c if c != "LIBS" else os.pathsep.join(libraries) for c in cmd ]
 
@@ -46,11 +46,12 @@ class BarCodeReader():
       SINGLE_FILE = True
     else:
       cmd += files
-
+    print "cmd:",cmd  
     (stdout, stderr) = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True).communicate()
     codes = []
     file_results = stdout.split("\nfile:")
     for result in file_results:
+      print "result:", result
       lines = stdout.split("\n")
       if re.search("No barcode found", lines[0]):
         codes.append(None)
