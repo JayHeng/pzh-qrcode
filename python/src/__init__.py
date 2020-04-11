@@ -20,7 +20,7 @@ class BarCodeReader():
 
   def __init__(self, loc=""):
     if not len(loc):
-      if (os.environ.has_key("ZXING_LIBRARY")):
+      if ("ZXING_LIBRARY" in os.environ):
         loc = os.environ["ZXING_LIBRARY"]
       else:
         loc = ".."
@@ -46,12 +46,10 @@ class BarCodeReader():
       SINGLE_FILE = True
     else:
       cmd += files
-    print "cmd:",cmd  
     (stdout, stderr) = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True).communicate()
     codes = []
     file_results = stdout.split("\nfile:")
     for result in file_results:
-      print "result:", result
       lines = stdout.split("\n")
       if re.search("No barcode found", lines[0]):
         codes.append(None)
