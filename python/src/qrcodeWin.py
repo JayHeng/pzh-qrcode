@@ -171,7 +171,7 @@ class Ui_MainWindow(object):
         self.comboBox_eccLevel.setCurrentIndex(0)
         self.comboBox_detectorType.setCurrentIndex(0)
         self.comboBox_destPictureType.setCurrentIndex(0)
-        self.comboBox_imageSource.setCurrentIndex(0)
+        self.comboBox_imageSource.setCurrentIndex(1)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):

@@ -6,9 +6,16 @@ import time
 from PyQt5.Qt import *
 from qrcodeWin import *
 from MyQR import myqr
+from zxing import *
 
 kGeneratorType_MyQR = 'MyQR'
 kGeneratorType_pzh  = 'pzh'
+
+kDetectorType_zxing = 'zxing'
+kDetectorType_pzh   = 'pzh'
+
+kImageSource_Camera  = 'Camera'
+kImageSource_Picture = 'Picture'
 
 class qrcodeMain(QMainWindow, Ui_MainWindow):
 
@@ -18,10 +25,13 @@ class qrcodeMain(QMainWindow, Ui_MainWindow):
         self._show_image(u"../img/default_bg.png")
         self._register_callbacks()
         self.destPicture = None
+        self.srcPicture = None
 
     def _register_callbacks(self):
         self.pushButton_selectDestPicturePath.clicked.connect(self.callbackDoSelectDestPicturePath)
         self.pushButton_generate.clicked.connect(self.callbackDoGenerate)
+        self.pushButton_selectSrcPicture.clicked.connect(self.callbackDoSelectSrcPicture)
+        self.pushButton_detect.clicked.connect(self.callbackDoDetect)
 
     def _show_image(self, picFile):
         picObj = QtGui.QPixmap(picFile).scaled(self.label_showImage.width(), self.label_showImage.height())
@@ -78,6 +88,37 @@ class qrcodeMain(QMainWindow, Ui_MainWindow):
                                                )
             self._show_image(qr_name)
         elif self.generatorType == kGeneratorType_pzh:
+            pass
+        else:
+            pass
+
+    def _get_detection_info(self):
+        self.detectorType = self.comboBox_detectorType.currentText()
+        self.imageSource = self.comboBox_imageSource.currentText()
+        if self.imageSource == kImageSource_Picture:
+            if self.srcPicture == None:
+                self.srcPicture = self.destPicture
+            return os.path.isfile(self.srcPicture)
+        elif self.imageSource == kImageSource_Camera:
+            return False
+        else:
+            pass
+
+    def callbackDoSelectSrcPicture(self):
+        self.srcPicture, dummyType = QtWidgets.QFileDialog.getOpenFileName(self, u"Browse File", os.getcwd(), "All Files(*);;Source Files(*.png)")
+        self.lineEdit_srcPicture.setText(self.srcPicture)
+
+    def callbackDoDetect(self):
+        if not self._get_detection_info():
+            return
+        if self.detectorType == kDetectorType_zxing:
+            # Have to add prefix 'file:/' to the real pictrue path, this is requirement from zxing'
+            srcPicture = 'file:/' + self.srcPicture
+            srcPicture = srcPicture.replace("\\", '/')
+            zx = BarCodeReader()
+            barcode = zx.decode(srcPicture)
+            self.lineEdit_decodedWords.setText(barcode.data)
+        elif self.detectorType == kDetectorType_pzh:
             pass
         else:
             pass
