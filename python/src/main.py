@@ -7,6 +7,7 @@ from PyQt5.Qt import *
 from qrcodeWin import *
 from MyQR import myqr
 from zxing import *
+import cv2
 
 kGeneratorType_MyQR = 'MyQR'
 kGeneratorType_pzh  = 'pzh'
@@ -17,6 +18,35 @@ kDetectorType_pzh   = 'pzh'
 kImageSource_Camera  = 'Camera'
 kImageSource_Picture = 'Picture'
 
+class Camera:
+
+    def __init__(self, width=420, height=420):
+        self.capture = cv2.VideoCapture(0)
+        self.image= QImage()
+        self.width = width
+        self.height = height
+
+    def get_frame(self):
+        ret, frame = self.capture.read()
+        frame = cv2.resize(frame, (self.width, self.height))
+        if ret:
+            if frame.ndim == 3:
+                rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            elif frame.ndim == 2:
+                rgb = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+            else:
+                pass
+            h, w = frame.shape[:2]
+            self.image = QImage(rgb.data, w, h, QImage.Format_RGB888)
+            return QPixmap.fromImage(self.image)
+
+    def save_frame(self, picFile):
+        self.image.save(picFile, "JPG")
+
+    def destroy(self):
+        self.capture.release()
+        cv2.destroyAllWindows()
+
 class qrcodeMain(QMainWindow, Ui_MainWindow):
 
     def __init__(self, parent=None):
@@ -25,12 +55,14 @@ class qrcodeMain(QMainWindow, Ui_MainWindow):
         self._register_callbacks()
         self.destPicture = None
         self.srcPicture = None
+        self.camera = Camera(self.label_showImage.width(), self.label_showImage.height())
         self.imageSource = self.comboBox_imageSource.currentText()
         self._show_background_image_if_appliable()
 
     def _register_callbacks(self):
         self.pushButton_selectDestPicturePath.clicked.connect(self.callbackDoSelectDestPicturePath)
         self.pushButton_generate.clicked.connect(self.callbackDoGenerate)
+        self.comboBox_imageSource.currentIndexChanged.connect(self.callbackDoChangeImageSource)
         self.pushButton_selectSrcPicture.clicked.connect(self.callbackDoSelectSrcPicture)
         self.pushButton_detect.clicked.connect(self.callbackDoDetect)
 
@@ -98,20 +130,29 @@ class qrcodeMain(QMainWindow, Ui_MainWindow):
         else:
             pass
 
+    def callbackDoChangeImageSource(self):
+        self.imageSource = self.comboBox_imageSource.currentText()
+        self._show_background_image_if_appliable()
+
     def _get_detection_info(self):
         self.detectorType = self.comboBox_detectorType.currentText()
-        self.imageSource = self.comboBox_imageSource.currentText()
         if self.imageSource == kImageSource_Picture:
             if self.srcPicture == None:
                 self.srcPicture = self.destPicture
-            try:
-                return os.path.isfile(self.srcPicture)
-            except:
-                return False
         elif self.imageSource == kImageSource_Camera:
-            return False
+            self.camera.get_frame()
+            self.srcPicture = os.path.join(os.getcwd(), u"camera_image.jpg")
+            self.camera.save_frame(self.srcPicture)
         else:
             pass
+        try:
+            if os.path.isfile(self.srcPicture):
+                self._show_image_file(self.srcPicture)
+                return True
+            else:
+                return False
+        except:
+            return False
 
     def callbackDoSelectSrcPicture(self):
         self.srcPicture, dummyType = QtWidgets.QFileDialog.getOpenFileName(self, u"Browse File", os.getcwd(), "All Files(*);;Source Files(*.png)")
@@ -126,8 +167,11 @@ class qrcodeMain(QMainWindow, Ui_MainWindow):
             srcPicture = 'file:/' + self.srcPicture
             srcPicture = srcPicture.replace("\\", '/')
             zx = BarCodeReader()
-            barcode = zx.decode(srcPicture)
-            self.lineEdit_decodedWords.setText(barcode.data)
+            try:
+                barcode = zx.decode(srcPicture)
+                self.lineEdit_decodedWords.setText(barcode.data)
+            except:
+                self.lineEdit_decodedWords.clear()
         elif self.detectorType == kDetectorType_pzh:
             pass
         else:
