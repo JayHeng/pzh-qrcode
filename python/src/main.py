@@ -3,6 +3,9 @@
 import sys
 import os
 import time
+import threading
+import inspect
+import ctypes
 from PyQt5.Qt import *
 from qrcodeWin import *
 from MyQR import myqr
@@ -18,9 +21,24 @@ kDetectorType_pzh   = 'pzh'
 kImageSource_Camera  = 'Camera'
 kImageSource_Picture = 'Picture'
 
+g_main_win    = None
+g_task_camera = None
+
+def _async_raise(tid, exctype):
+    tid = ctypes.c_long(tid)
+    if not inspect.isclass(exctype):
+        exctype = type(exctype)
+    res = ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, ctypes.py_object(exctype))
+    if res == 0:
+        raise ValueError("invalid thread id")
+    elif res != 1:
+        ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, None)
+        raise SystemError("PyThreadState_SetAsyncExc failed")
+
 class Camera:
 
     def __init__(self, width=420, height=420):
+        # 0 means internal camera of PC
         self.capture = cv2.VideoCapture(0)
         self.image= QImage()
         self.width = width
@@ -28,20 +46,19 @@ class Camera:
 
     def get_frame(self):
         ret, frame = self.capture.read()
-        frame = cv2.resize(frame, (self.width, self.height))
         if ret:
-            if frame.ndim == 3:
-                rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            elif frame.ndim == 2:
-                rgb = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
-            else:
-                pass
-            h, w = frame.shape[:2]
-            self.image = QImage(rgb.data, w, h, QImage.Format_RGB888)
+            frame = cv2.resize(frame, (self.width, self.height))
+            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            self.image = QImage(rgb.data, frame.shape[1], frame.shape[0], QImage.Format_RGB888)
             return QPixmap.fromImage(self.image)
+        else:
+            return None
 
     def save_frame(self, picFile):
-        self.image.save(picFile, "JPG")
+        try:
+            self.image.save(picFile, "JPG")
+        except:
+            pass
 
     def destroy(self):
         self.capture.release()
@@ -72,6 +89,7 @@ class qrcodeMain(QMainWindow, Ui_MainWindow):
 
     def _show_background_image_if_appliable(self):
         if self.imageSource == kImageSource_Picture:
+            time.sleep(0.5)
             self._show_image_file(u"../img/default_bg.png")
             self.srcPicture = None
 
@@ -130,6 +148,13 @@ class qrcodeMain(QMainWindow, Ui_MainWindow):
         else:
             pass
 
+    def task_showImageFromCameraContinuously(self):
+        while True:
+            if self.imageSource == kImageSource_Camera:
+                frame = self.camera.get_frame()
+                if frame != None:
+                    self.label_showImage.setPixmap(frame)
+
     def callbackDoChangeImageSource(self):
         self.imageSource = self.comboBox_imageSource.currentText()
         self._show_background_image_if_appliable()
@@ -179,9 +204,14 @@ class qrcodeMain(QMainWindow, Ui_MainWindow):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    main_win = qrcodeMain()
-    main_win.setWindowTitle(u"pzh-qrcode v1.0")
-    main_win.show()
+    g_main_win = qrcodeMain()
+    g_main_win.setWindowTitle(u"pzh-qrcode v1.0")
+    g_main_win.show()
+
+    g_task_camera = threading.Thread(target=g_main_win.task_showImageFromCameraContinuously)
+    g_task_camera.setDaemon(True)
+    g_task_camera.start()
+
     sys.exit(app.exec_())
 
 
