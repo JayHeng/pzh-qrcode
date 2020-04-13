@@ -617,19 +617,6 @@
      </property>
     </item>
    </widget>
-   <widget class="QCheckBox" name="checkBox_activateSource">
-    <property name="geometry">
-     <rect>
-      <x>340</x>
-      <y>540</y>
-      <width>101</width>
-      <height>17</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Activate Source</string>
-    </property>
-   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">

@@ -153,9 +153,6 @@ class Ui_MainWindow(object):
         self.comboBox_imageSource.setObjectName("comboBox_imageSource")
         self.comboBox_imageSource.addItem("")
         self.comboBox_imageSource.addItem("")
-        self.checkBox_activateSource = QtWidgets.QCheckBox(self.centralwidget)
-        self.checkBox_activateSource.setGeometry(QtCore.QRect(340, 540, 101, 17))
-        self.checkBox_activateSource.setObjectName("checkBox_activateSource")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 477, 21))
@@ -245,5 +242,4 @@ class Ui_MainWindow(object):
         self.label_imageSource.setText(_translate("MainWindow", "Image Source:"))
         self.comboBox_imageSource.setItemText(0, _translate("MainWindow", "Camera"))
         self.comboBox_imageSource.setItemText(1, _translate("MainWindow", "Picture"))
-        self.checkBox_activateSource.setText(_translate("MainWindow", "Activate Source"))
 

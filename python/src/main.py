@@ -22,10 +22,11 @@ class qrcodeMain(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super(qrcodeMain, self).__init__(parent)
         self.setupUi(self)
-        self._show_image(u"../img/default_bg.png")
         self._register_callbacks()
         self.destPicture = None
         self.srcPicture = None
+        self.imageSource = self.comboBox_imageSource.currentText()
+        self._show_background_image_if_appliable()
 
     def _register_callbacks(self):
         self.pushButton_selectDestPicturePath.clicked.connect(self.callbackDoSelectDestPicturePath)
@@ -33,9 +34,14 @@ class qrcodeMain(QMainWindow, Ui_MainWindow):
         self.pushButton_selectSrcPicture.clicked.connect(self.callbackDoSelectSrcPicture)
         self.pushButton_detect.clicked.connect(self.callbackDoDetect)
 
-    def _show_image(self, picFile):
+    def _show_image_file(self, picFile):
         picObj = QtGui.QPixmap(picFile).scaled(self.label_showImage.width(), self.label_showImage.height())
         self.label_showImage.setPixmap(picObj)
+
+    def _show_background_image_if_appliable(self):
+        if self.imageSource == kImageSource_Picture:
+            self._show_image_file(u"../img/default_bg.png")
+            self.srcPicture = None
 
     def _get_generation_info(self):
         self.generatorType = self.comboBox_generatorType.currentText()
@@ -86,7 +92,7 @@ class qrcodeMain(QMainWindow, Ui_MainWindow):
                                                save_name=picName,
                                                save_dir=picPath
                                                )
-            self._show_image(qr_name)
+            self._show_image_file(qr_name)
         elif self.generatorType == kGeneratorType_pzh:
             pass
         else:
@@ -98,7 +104,10 @@ class qrcodeMain(QMainWindow, Ui_MainWindow):
         if self.imageSource == kImageSource_Picture:
             if self.srcPicture == None:
                 self.srcPicture = self.destPicture
-            return os.path.isfile(self.srcPicture)
+            try:
+                return os.path.isfile(self.srcPicture)
+            except:
+                return False
         elif self.imageSource == kImageSource_Camera:
             return False
         else:
@@ -107,6 +116,7 @@ class qrcodeMain(QMainWindow, Ui_MainWindow):
     def callbackDoSelectSrcPicture(self):
         self.srcPicture, dummyType = QtWidgets.QFileDialog.getOpenFileName(self, u"Browse File", os.getcwd(), "All Files(*);;Source Files(*.png)")
         self.lineEdit_srcPicture.setText(self.srcPicture)
+        self._show_image_file(self.srcPicture)
 
     def callbackDoDetect(self):
         if not self._get_detection_info():
