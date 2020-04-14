@@ -73,6 +73,7 @@ class qrcodeMain(QMainWindow, Ui_MainWindow):
         self.destPicture = None
         self.srcPicture = None
         self.camera = Camera(self.label_showImage.width(), self.label_showImage.height())
+        self.hasCameraImageBeenDetected = False
         self.imageSource = self.comboBox_imageSource.currentText()
         self._show_background_image_if_appliable()
 
@@ -151,6 +152,10 @@ class qrcodeMain(QMainWindow, Ui_MainWindow):
     def task_showImageFromCameraContinuously(self):
         while True:
             if self.imageSource == kImageSource_Camera:
+                if self.hasCameraImageBeenDetected:
+                    continue
+                else:
+                    self.hasCameraImageBeenDetected = self._do_detect()
                 frame = self.camera.get_frame()
                 if frame != None:
                     self.label_showImage.setPixmap(frame)
@@ -158,6 +163,7 @@ class qrcodeMain(QMainWindow, Ui_MainWindow):
     def callbackDoChangeImageSource(self):
         self.imageSource = self.comboBox_imageSource.currentText()
         self._show_background_image_if_appliable()
+        self.hasCameraImageBeenDetected = False
 
     def _get_detection_info(self):
         self.detectorType = self.comboBox_detectorType.currentText()
@@ -184,9 +190,9 @@ class qrcodeMain(QMainWindow, Ui_MainWindow):
         self.lineEdit_srcPicture.setText(self.srcPicture)
         self._show_image_file(self.srcPicture)
 
-    def callbackDoDetect(self):
+    def _do_detect(self):
         if not self._get_detection_info():
-            return
+            return False
         if self.detectorType == kDetectorType_zxing:
             # Have to add prefix 'file:/' to the real pictrue path, this is requirement from zxing'
             srcPicture = 'file:/' + self.srcPicture
@@ -195,10 +201,20 @@ class qrcodeMain(QMainWindow, Ui_MainWindow):
             try:
                 barcode = zx.decode(srcPicture)
                 self.lineEdit_decodedWords.setText(barcode.data)
+                return (barcode.data != '')
             except:
-                self.lineEdit_decodedWords.clear()
+                return False
         elif self.detectorType == kDetectorType_pzh:
+            return False
+        else:
             pass
+
+    def callbackDoDetect(self):
+        self.lineEdit_decodedWords.clear()
+        if self.imageSource == kImageSource_Picture:
+            self._do_detect()
+        elif self.imageSource == kImageSource_Camera:
+            self.hasCameraImageBeenDetected = False
         else:
             pass
 
