@@ -7,7 +7,7 @@ import threading
 import inspect
 import ctypes
 from PyQt5.Qt import *
-from qrcodeWin import *
+from qrcode_win import *
 from MyQR import myqr
 from zxing import *
 import cv2
