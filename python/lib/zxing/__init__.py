@@ -15,7 +15,7 @@ import subprocess, re, os
 class BarCodeReader():
   location = ""
   command = "java"
-  libs = [r"C:\tools_mcu\Python36\Lib\site-packages\zxing\javase-3.4.0.jar", r"C:\tools_mcu\Python36\Lib\site-packages\zxing\core-3.4.0.jar", r"C:\tools_mcu\Python36\Lib\site-packages\zxing\jcommander-1.78.jar"]
+  libs = ["javase-3.4.0.jar", "core-3.4.0.jar", "jcommander-1.78.jar"]
   args = ["-cp", "LIBS", "com.google.zxing.client.j2se.CommandLineRunner"]
 
   def __init__(self, loc=""):
@@ -35,7 +35,7 @@ class BarCodeReader():
     if qr_only:
       cmd.append("--possibleFormats=QR_CODE")
 
-    libraries = [ l for l in self.libs]# self.location + "/" +
+    libraries = [self.location + "/" + l for l in self.libs]
 
     cmd = [ c if c != "LIBS" else os.pathsep.join(libraries) for c in cmd ]
 
